@@ -9,7 +9,7 @@ import torch.nn as nn
 import sys
 
 sys.path.append("..")
-from core.count_macs_params import count_info, tool_funcs
+from model_counter.num_ops_params import count_info, tool_funcs
 
 
 class SubModule(nn.Module):

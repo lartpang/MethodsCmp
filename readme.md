@@ -52,4 +52,5 @@ At the same time, I also made appropriate improvements with reference to PR (htt
 
 ## Change Log
 
+* 2021-08-31: Refactor.
 * 2021-08-29: Create a new repository and upload the code.

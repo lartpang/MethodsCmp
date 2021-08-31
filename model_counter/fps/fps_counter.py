@@ -1,16 +1,32 @@
+import time
+
 import torch
 from tqdm import tqdm
-from utils.misc import to_cuda
+
+from ..utils import to_cuda
+
+
+def cal_fps(model, data, num_samples=1000, on_gpu=True):
+    print(
+        f"Counting FPS for {model.__class__.__name__} with {num_samples} data", end=""
+    )
+
+    if on_gpu:
+        print(" on gpu")
+        fps = _get_fps_on_gpu(data, model, num_samples)
+    else:
+        print(" on cpu")
+        fps = _get_fps_on_cpu(data, model, num_samples)
+
+    fps = f"{fps:.03f}"
+    return fps
 
 
 @torch.no_grad()
-def cal_fps(model, data, num_samples=1000):
-    print(f"Calculating the FPS for model {model.__class__.__name__} with {num_samples} data ")
+def _get_fps_on_gpu(data, model, num_samples):
     data = to_cuda(data)
-
     model.cuda()
     model.eval()
-
     tqdm_iter = tqdm(range(num_samples), total=num_samples, leave=False)
     elapsed_time_s_list = []
     for i in tqdm_iter:
@@ -32,5 +48,22 @@ def cal_fps(model, data, num_samples=1000):
         # torch.cuda.synchronize()
         # end_time = time.time()
         # elapsed_time_s_list.append(end_time - start_time)
-    fps = f"{len(elapsed_time_s_list) / sum(elapsed_time_s_list):.3f}"
+
+    fps = len(elapsed_time_s_list) / sum(elapsed_time_s_list)
+    return fps
+
+
+@torch.no_grad()
+def _get_fps_on_cpu(data, model, num_samples):
+    model.eval()
+    tqdm_iter = tqdm(range(num_samples), total=num_samples, leave=False)
+    elapsed_time_s_list = []
+    for i in tqdm_iter:
+        tqdm_iter.set_description(f"te=>{i + 1} ")
+        start_time = time.time()
+        model(data)  # 按照实际情况改写
+        end_time = time.time()
+        elapsed_time_s_list.append(end_time - start_time)
+
+    fps = len(elapsed_time_s_list) / sum(elapsed_time_s_list)
     return fps

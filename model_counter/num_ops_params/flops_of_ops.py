@@ -17,10 +17,15 @@ multiply_adds = 1
 
 
 def count_parameters(ops: nn.Module, in_tensor, out_tensor):
-    total_params = 0
-    for p in ops.parameters(recurse=False):  # 仅计算当前层的参数，不包含子模块
-        total_params += torch.DoubleTensor([p.numel()])
-    ops.total_params[0] = total_params
+    # 仅计算当前层的参数，不包含子模块
+    # 这里使用`=`，保证多次调用会自动覆盖，仅计算一次
+    ops.total_params[0] = sum(
+        [torch.DoubleTensor([p.numel()]) for p in ops.parameters(recurse=False)]
+    )
+
+
+def count_total_parameters(model: nn.Module):
+    return sum([p.numel() for p in model.parameters()])
 
 
 def zero_ops(ops: nn.Module, in_tensor, out_tensor):
@@ -35,12 +40,16 @@ def count_convNd(ops: _ConvNd, in_tensor: (torch.Tensor,), out_tensor: torch.Ten
     bias_ops = 1 if ops.bias is not None else 0
 
     # N in_tensor Cout in_tensor H in_tensor W in_tensor  (Cin in_tensor Kw in_tensor Kh + bias)
-    total_ops = out_tensor.nelement() * (ops.in_channels // ops.groups * kernel_ops + bias_ops)
+    total_ops = out_tensor.nelement() * (
+        ops.in_channels // ops.groups * kernel_ops + bias_ops
+    )
 
-    ops.total_ops += torch.DoubleTensor([int(total_ops)])
+    ops.total_ops += torch.DoubleTensor([int(total_ops)])  # 多次调用会自动累加，便于应用在siamese结构中
 
 
-def count_convNd_ver2(ops: _ConvNd, in_tensor: (torch.Tensor,), out_tensor: torch.Tensor):
+def count_convNd_ver2(
+    ops: _ConvNd, in_tensor: (torch.Tensor,), out_tensor: torch.Tensor
+):
     in_tensor = in_tensor[0]
 
     # N in_tensor H in_tensor W (exclude Cout)
@@ -54,7 +63,9 @@ def count_convNd_ver2(ops: _ConvNd, in_tensor: (torch.Tensor,), out_tensor: torc
     ops.total_ops += torch.DoubleTensor([int(output_size * kernel_ops)])
 
 
-def count_convNd_mul(ops: _ConvNd, in_tensor: (torch.Tensor,), out_tensor: torch.Tensor):
+def count_convNd_mul(
+    ops: _ConvNd, in_tensor: (torch.Tensor,), out_tensor: torch.Tensor
+):
     in_tensor = in_tensor[0]
 
     # N in_tensor H in_tensor W (exclude Cout)
@@ -100,7 +111,9 @@ def count_avgpool(ops: nn.Module, in_tensor, out_tensor):
 
 
 def count_adap_avgpool(ops: nn.Module, in_tensor, out_tensor):
-    kernel = torch.DoubleTensor([*(in_tensor[0].shape[2:])]) // torch.DoubleTensor([*(out_tensor.shape[2:])])
+    kernel = torch.DoubleTensor([*(in_tensor[0].shape[2:])]) // torch.DoubleTensor(
+        [*(out_tensor.shape[2:])]
+    )
     total_add = torch.prod(kernel)
     total_div = 1
     kernel_ops = total_add + total_div
