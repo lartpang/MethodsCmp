@@ -3,7 +3,7 @@ import time
 import torch
 from tqdm import tqdm
 
-from ..utils import to_cuda
+from ..misc import to_cuda
 
 
 def cal_fps(model, data, num_samples=1000, on_gpu=True):

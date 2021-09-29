@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2021/8/6
-# @Author  : Lart Pang
-# @GitHub  : https://github.com/lartpang
 from torch import nn
 from torchvision.models import resnet50
 

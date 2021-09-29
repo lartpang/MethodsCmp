@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2021/5/11
-# @Author  : Lart Pang
-# @GitHub  : https://github.com/lartpang
 import logging
 import operator
 from distutils.version import LooseVersion

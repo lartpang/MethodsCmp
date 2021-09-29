@@ -1,15 +1,10 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2021/5/12
-# @Author  : Lart Pang
-# @GitHub  : https://github.com/lartpang
-
+import sys
 
 import torch
 import torch.nn as nn
-import sys
 
 sys.path.append("..")
-from model_counter.num_ops_params import count_info, tool_funcs
+from utils.num_ops_params import count_info, tool_funcs
 
 
 class SubModule(nn.Module):
@@ -43,7 +38,7 @@ model = MyModule()
 print(sum([m.numel() for m in model.parameters()]))
 
 input = torch.randn(1, 2, 5, 5)
-macs, params = count_info.profile(
+macs, params = count_info.profile_with_inter_params(
     model,
     inputs=(input,),
     custom_ops={
@@ -55,7 +50,6 @@ macs, params = count_info.profile(
 )
 macs, params = tool_funcs.clever_format([macs, params], "%.3f")
 print(macs, params)
-
 
 """
 40
@@ -75,5 +69,38 @@ main->sub_module(SubModule)
 LayerTotal: ops: 825.0, params: 32.0
 main
 LayerTotal: ops: 1025.0, params: 40.0
+1.025K 40.000B
+"""
+
+macs, params = count_info.profile(
+    model,
+    inputs=(input,),
+    custom_ops={
+        SubModule: count_flops_for_sub_module,
+    },
+    # verbose_for_hook=True,
+    verbose_for_count=True,
+    # exclude_modules=(Attention,),
+)
+macs, params = tool_funcs.clever_format([macs, params], "%.3f")
+print(macs, params)
+
+"""
+main
+LayerSelf: ops: 0
+main->conv(Conv2d)
+LayerSelf: ops: 200.0
+main->conv(Conv2d)
+LayerTotal: ops: 200.0
+main->sub_module(SubModule)
+LayerSelf: ops: 25.0
+main->sub_module(SubModule)->conv(Conv2d)
+LayerSelf: ops: 800.0
+main->sub_module(SubModule)->conv(Conv2d)
+LayerTotal: ops: 800.0
+main->sub_module(SubModule)
+LayerTotal: ops: 825.0
+main
+LayerTotal: ops: 1025.0
 1.025K 40.000B
 """

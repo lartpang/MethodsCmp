@@ -1,8 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2021/8/6
-# @Author  : Lart Pang
-# @GitHub  : https://github.com/lartpang
-
 import torch
 import torch.nn.functional as F
 from torch import nn
@@ -37,8 +32,12 @@ class DANet_V19(nn.Module):
             nn.BatchNorm2d(128),
             nn.PReLU(),
         )
-        self.dem4 = nn.Sequential(nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.PReLU())
-        self.dem5 = nn.Sequential(nn.Conv2d(64, 32, kernel_size=3, padding=1), nn.BatchNorm2d(32), nn.PReLU())
+        self.dem4 = nn.Sequential(
+            nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.PReLU()
+        )
+        self.dem5 = nn.Sequential(
+            nn.Conv2d(64, 32, kernel_size=3, padding=1), nn.BatchNorm2d(32), nn.PReLU()
+        )
 
         self.fuse_1 = nn.Sequential(
             nn.Conv2d(512, 256, kernel_size=1),
@@ -91,13 +90,23 @@ class DANet_V19(nn.Module):
             nn.BatchNorm2d(128),
             nn.PReLU(),
         )
-        self.output3 = nn.Sequential(nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.PReLU())
-        self.output3_rev = nn.Sequential(nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.PReLU())
-        self.output4 = nn.Sequential(nn.Conv2d(64, 32, kernel_size=3, padding=1), nn.BatchNorm2d(32), nn.PReLU())
-        self.output4_rev = nn.Sequential(nn.Conv2d(64, 32, kernel_size=3, padding=1), nn.BatchNorm2d(32), nn.PReLU())
+        self.output3 = nn.Sequential(
+            nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.PReLU()
+        )
+        self.output3_rev = nn.Sequential(
+            nn.Conv2d(128, 64, kernel_size=3, padding=1), nn.BatchNorm2d(64), nn.PReLU()
+        )
+        self.output4 = nn.Sequential(
+            nn.Conv2d(64, 32, kernel_size=3, padding=1), nn.BatchNorm2d(32), nn.PReLU()
+        )
+        self.output4_rev = nn.Sequential(
+            nn.Conv2d(64, 32, kernel_size=3, padding=1), nn.BatchNorm2d(32), nn.PReLU()
+        )
         self.output5 = nn.Sequential(nn.Conv2d(32, 1, kernel_size=3, padding=1))
         self.output5_rev = nn.Sequential(nn.Conv2d(32, 1, kernel_size=3, padding=1))
-        self.fuseout = nn.Sequential(nn.Conv2d(2, 1, kernel_size=3, padding=1), nn.PReLU())
+        self.fuseout = nn.Sequential(
+            nn.Conv2d(2, 1, kernel_size=3, padding=1), nn.PReLU()
+        )
 
         for m in self.modules():
             if isinstance(m, nn.ReLU) or isinstance(m, nn.Dropout):
@@ -123,7 +132,12 @@ class DANet_V19(nn.Module):
         dem5 = self.dem5(c1)
         ################################DAM for Saliency branch&Background branch#######################################
         dem1_attention = torch.sigmoid(
-            self.fuse_1(dem1 + F.interpolate(depth, size=dem1.size()[2:], mode="bilinear", align_corners=False))
+            self.fuse_1(
+                dem1
+                + F.interpolate(
+                    depth, size=dem1.size()[2:], mode="bilinear", align_corners=False
+                )
+            )
         )
         output1 = self.output1(
             dem1
@@ -159,12 +173,18 @@ class DANet_V19(nn.Module):
         dem2_attention = torch.sigmoid(
             self.fuse_2(
                 dem2
-                + F.interpolate(output1, size=dem2.size()[2:], mode="bilinear", align_corners=False)
-                + F.interpolate(depth, size=dem2.size()[2:], mode="bilinear", align_corners=False)
+                + F.interpolate(
+                    output1, size=dem2.size()[2:], mode="bilinear", align_corners=False
+                )
+                + F.interpolate(
+                    depth, size=dem2.size()[2:], mode="bilinear", align_corners=False
+                )
             )
         )
         output2 = self.output2(
-            F.interpolate(output1, size=dem2.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output1, size=dem2.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem2
             * (
                 dem2_attention
@@ -180,7 +200,9 @@ class DANet_V19(nn.Module):
             )
         )
         output2_rev = self.output2_rev(
-            F.interpolate(output1_rev, size=dem2.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output1_rev, size=dem2.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem2
             * (
                 (1 - dem2_attention)
@@ -199,12 +221,18 @@ class DANet_V19(nn.Module):
         dem3_attention = torch.sigmoid(
             self.fuse_3(
                 dem3
-                + F.interpolate(output2, size=dem3.size()[2:], mode="bilinear", align_corners=False)
-                + F.interpolate(depth, size=dem3.size()[2:], mode="bilinear", align_corners=False)
+                + F.interpolate(
+                    output2, size=dem3.size()[2:], mode="bilinear", align_corners=False
+                )
+                + F.interpolate(
+                    depth, size=dem3.size()[2:], mode="bilinear", align_corners=False
+                )
             )
         )
         output3 = self.output3(
-            F.interpolate(output2, size=dem3.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output2, size=dem3.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem3
             * (
                 dem3_attention
@@ -220,7 +248,9 @@ class DANet_V19(nn.Module):
             )
         )
         output3_rev = self.output3_rev(
-            F.interpolate(output2_rev, size=dem3.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output2_rev, size=dem3.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem3
             * (
                 (1 - dem3_attention)
@@ -239,12 +269,18 @@ class DANet_V19(nn.Module):
         dem4_attention = torch.sigmoid(
             self.fuse_4(
                 dem4
-                + F.interpolate(output3, size=dem4.size()[2:], mode="bilinear", align_corners=False)
-                + F.interpolate(depth, size=dem4.size()[2:], mode="bilinear", align_corners=False)
+                + F.interpolate(
+                    output3, size=dem4.size()[2:], mode="bilinear", align_corners=False
+                )
+                + F.interpolate(
+                    depth, size=dem4.size()[2:], mode="bilinear", align_corners=False
+                )
             )
         )
         output4 = self.output4(
-            F.interpolate(output3, size=dem4.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output3, size=dem4.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem4
             * (
                 dem4_attention
@@ -260,7 +296,9 @@ class DANet_V19(nn.Module):
             )
         )
         output4_rev = self.output4_rev(
-            F.interpolate(output3_rev, size=dem4.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output3_rev, size=dem4.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem4
             * (
                 (1 - dem4_attention)
@@ -279,12 +317,18 @@ class DANet_V19(nn.Module):
         dem5_attention = torch.sigmoid(
             self.fuse_5(
                 dem5
-                + F.interpolate(output4, size=dem5.size()[2:], mode="bilinear", align_corners=False)
-                + F.interpolate(depth, size=dem5.size()[2:], mode="bilinear", align_corners=False)
+                + F.interpolate(
+                    output4, size=dem5.size()[2:], mode="bilinear", align_corners=False
+                )
+                + F.interpolate(
+                    depth, size=dem5.size()[2:], mode="bilinear", align_corners=False
+                )
             )
         )
         output5 = self.output5(
-            F.interpolate(output4, size=dem5.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output4, size=dem5.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem5
             * (
                 dem5_attention
@@ -300,7 +344,9 @@ class DANet_V19(nn.Module):
             )
         )
         output5_rev = self.output5_rev(
-            F.interpolate(output4_rev, size=dem5.size()[2:], mode="bilinear", align_corners=False)
+            F.interpolate(
+                output4_rev, size=dem5.size()[2:], mode="bilinear", align_corners=False
+            )
             + dem5
             * (
                 (1 - dem5_attention)
@@ -317,8 +363,12 @@ class DANet_V19(nn.Module):
         )
 
         ################################Dual Branch Fuse#######################################
-        output5 = F.interpolate(output5, size=input.size()[2:], mode="bilinear", align_corners=False)
-        output5_rev = F.interpolate(output5_rev, size=input.size()[2:], mode="bilinear", align_corners=False)
+        output5 = F.interpolate(
+            output5, size=input.size()[2:], mode="bilinear", align_corners=False
+        )
+        output5_rev = F.interpolate(
+            output5_rev, size=input.size()[2:], mode="bilinear", align_corners=False
+        )
         output = self.fuseout(torch.cat((output5, -output5_rev), 1))
         output = -output5_rev + output
 

@@ -1,7 +1,9 @@
 import pynvml
 import torch
 
-from ..utils import to_cuda
+from ..misc import to_cuda
+
+pynvml.nvmlInit()
 
 
 @torch.no_grad()
@@ -11,8 +13,8 @@ def cal_gpu_mem(model, data, device=0):
     print(f"Counting GPU memory for {model.__class__.__name__}")
     data = to_cuda(data)
     model.cpu()
+    torch.cuda.empty_cache()
 
-    pynvml.nvmlInit()
     handle = pynvml.nvmlDeviceGetHandleByIndex(device)
     meminfo = pynvml.nvmlDeviceGetMemoryInfo(handle)
     initial_mem = meminfo.used

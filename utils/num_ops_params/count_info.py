@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2021/5/11
-# @Author  : Lart Pang
-# @GitHub  : https://github.com/lartpang
 from typing import Tuple
 
 import torch
@@ -13,7 +9,7 @@ from .flops_of_ops import count_parameters, count_total_parameters, register_hoo
 default_dtype = torch.float64
 
 
-def profile(
+def profile_with_inter_params(
     model: nn.Module,
     inputs: tuple,
     custom_ops: dict = None,
@@ -21,15 +17,6 @@ def profile(
     verbose_for_count: bool = False,
     exclude_self_modules: Tuple[nn.Module] = None,
 ):
-    """
-    :param model:
-    :param inputs:
-    :param custom_ops:
-    :param verbose_for_hook:
-    :param verbose_for_count:
-    :param exclude_self_modules: 不统计自身信息的特定模块
-    :return:
-    """
     _custom_ops = {}
     _skip_self_modules = (nn.Sequential, nn.ModuleList, nn.ModuleDict)
     if custom_ops is not None:
@@ -136,7 +123,7 @@ def profile(
     return total_ops, total_params
 
 
-def profile_v2(
+def profile(
     model: nn.Module,
     inputs: tuple,
     custom_ops: dict = None,
@@ -144,15 +131,6 @@ def profile_v2(
     verbose_for_count: bool = False,
     exclude_self_modules: Tuple[nn.Module] = None,
 ):
-    """
-    :param model:
-    :param inputs:
-    :param custom_ops:
-    :param verbose_for_hook:
-    :param verbose_for_count:
-    :param exclude_self_modules: 不统计自身信息的特定模块
-    :return:
-    """
     _custom_ops = {}
     _skip_self_modules = (nn.Sequential, nn.ModuleList, nn.ModuleDict)
     if custom_ops is not None:

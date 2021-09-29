@@ -1,7 +1,3 @@
-# -*- coding: utf-8 -*-
-# @Time    : 2021/8/6
-# @Author  : Lart Pang
-# @GitHub  : https://github.com/lartpang
 import torch
 
 from methods.eccv2020_danet.base_modules import PAFEM

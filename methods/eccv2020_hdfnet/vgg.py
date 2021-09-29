@@ -61,8 +61,49 @@ def make_layers(cfg, batch_norm=False):
 cfgs = {
     "A": [64, "M", 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
     "B": [64, 64, "M", 128, 128, "M", 256, 256, "M", 512, 512, "M", 512, 512, "M"],
-    "D": [64, 64, "M", 128, 128, "M", 256, 256, 256, "M", 512, 512, 512, "M", 512, 512, 512, "M"],
-    "E": [64, 64, "M", 128, 128, "M", 256, 256, 256, 256, "M", 512, 512, 512, 512, "M", 512, 512, 512, 512, "M"],
+    "D": [
+        64,
+        64,
+        "M",
+        128,
+        128,
+        "M",
+        256,
+        256,
+        256,
+        "M",
+        512,
+        512,
+        512,
+        "M",
+        512,
+        512,
+        512,
+        "M",
+    ],
+    "E": [
+        64,
+        64,
+        "M",
+        128,
+        128,
+        "M",
+        256,
+        256,
+        256,
+        256,
+        "M",
+        512,
+        512,
+        512,
+        512,
+        "M",
+        512,
+        512,
+        512,
+        512,
+        "M",
+    ],
 }
 
 
@@ -128,7 +169,9 @@ def vgg19_bn(pretrained=False, progress=True, **kwargs):
 
 def Backbone_VGG_in4():
     net = vgg16_bn(pretrained=True, progress=True)
-    div_1 = nn.Sequential(nn.Conv2d(4, 64, kernel_size=3, padding=1), *list(net.children())[0][1:6])
+    div_1 = nn.Sequential(
+        nn.Conv2d(4, 64, kernel_size=3, padding=1), *list(net.children())[0][1:6]
+    )
     div_2 = nn.Sequential(*list(net.children())[0][6:13])
     div_4 = nn.Sequential(*list(net.children())[0][13:23])
     div_8 = nn.Sequential(*list(net.children())[0][23:33])
@@ -140,7 +183,9 @@ def Backbone_VGG_in1(pretrained=True):
     if pretrained:
         print("The backbone model loads the pretrained parameters...")
     net = vgg16_bn(pretrained=pretrained, progress=True)
-    div_1 = nn.Sequential(nn.Conv2d(1, 64, kernel_size=3, padding=1), *list(net.children())[0][1:6])
+    div_1 = nn.Sequential(
+        nn.Conv2d(1, 64, kernel_size=3, padding=1), *list(net.children())[0][1:6]
+    )
     div_2 = nn.Sequential(*list(net.children())[0][6:13])
     div_4 = nn.Sequential(*list(net.children())[0][13:23])
     div_8 = nn.Sequential(*list(net.children())[0][23:33])
@@ -164,7 +209,9 @@ def Backbone_VGG19_in1(pretrained=True):
     if pretrained:
         print("The backbone model loads the pretrained parameters...")
     net = vgg19_bn(pretrained=pretrained, progress=True)
-    div_1 = nn.Sequential(nn.Conv2d(1, 64, kernel_size=3, padding=1), *list(net.children())[0][1:6])
+    div_1 = nn.Sequential(
+        nn.Conv2d(1, 64, kernel_size=3, padding=1), *list(net.children())[0][1:6]
+    )
     div_2 = nn.Sequential(*list(net.children())[0][6:13])
     div_4 = nn.Sequential(*list(net.children())[0][13:26])
     div_8 = nn.Sequential(*list(net.children())[0][26:39])
