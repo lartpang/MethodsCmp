@@ -72,7 +72,7 @@ def count_convNd_mul(
     ops.total_ops += torch.DoubleTensor([int(output_size * kernel_ops)])
 
 
-def count_relu(ops: nn.Module, in_tensor, out_tensor):
+def count_relu_w_params(ops: nn.Module, in_tensor, out_tensor):
     in_tensor = in_tensor[0]
 
     nelements = in_tensor.numel()
@@ -85,7 +85,7 @@ def count_softmax(ops: nn.Module, in_tensor, out_tensor):
     in_tensor = in_tensor[0]
 
     N, C, *HW = in_tensor.size()
-    nelements = C * reduce(operator.mul, HW)
+    nelements = C * reduce(operator.mul, HW)  # CHW
 
     total_exp = nelements
     total_add = nelements - 1
@@ -153,7 +153,7 @@ def count_upsample(ops: nn.Module, in_tensor, out_tensor):
     ops.total_ops += torch.DoubleTensor([int(total_ops)])
 
 
-def count_linear(ops, in_tensor, out_tensor):
+def count_linear(ops: nn.Linear, in_tensor, out_tensor):
     # per output element
     total_mul = ops.in_features
     # total_add = ops.in_features - 1
@@ -164,7 +164,7 @@ def count_linear(ops, in_tensor, out_tensor):
     ops.total_ops += torch.DoubleTensor([int(total_ops)])
 
 
-def count_bn(ops: nn.Module, in_tensor, out_tensor):
+def count_bn(ops: nn.BatchNorm2d, in_tensor, out_tensor):
     """
     如何计算CNN中batch normalization的计算复杂度（FLOPs）？ - 采石工的回答 - 知乎
     https://www.zhihu.com/question/400039617/answer/1270642900
@@ -186,27 +186,118 @@ def count_bn(ops: nn.Module, in_tensor, out_tensor):
     total_ops = in_tensor.numel()
     if ops.affine:
         # subtract, divide, gamma, beta
+        # self.weight = Parameter(torch.Tensor(num_features))
+        # self.bias = Parameter(torch.Tensor(num_features))
         total_ops *= 2
+
+    ops.total_ops += torch.DoubleTensor([int(total_ops)])
+
+
+def count_ln(ops: nn.LayerNorm, in_tensor, out_tensor):
+    in_tensor = in_tensor[0]
+
+    total_ops = in_tensor.numel()
+    if ops.elementwise_affine:
+        # self.weight = Parameter(torch.Tensor(*self.normalized_shape))
+        # self.bias = Parameter(torch.Tensor(*self.normalized_shape))
+        total_ops *= 2
+
+    ops.total_ops += torch.DoubleTensor([int(total_ops)])
+
+
+def count_in(ops: nn.InstanceNorm2d, in_tensor, out_tensor):
+    in_tensor = in_tensor[0]
+
+    total_ops = in_tensor.numel()
+    if ops.affine:
+        # subtract, divide, gamma, beta
+        # self.weight = Parameter(torch.Tensor(num_features))
+        # self.bias = Parameter(torch.Tensor(num_features))
+        total_ops *= 2
+
+    ops.total_ops += torch.DoubleTensor([int(total_ops)])
+
+
+def count_mha(ops: nn.MultiheadAttention, in_tensor, out_tensor):
+    query, key, value, *_ = in_tensor
+    total_ops = 0
+
+    q_l, q_n, q_e = query.shape
+    num_heads = ops.num_heads
+    head_dim = ops.head_dim
+    embed_dim = ops.embed_dim
+    assert embed_dim == q_e
+
+    # in_proj
+    if ops._qkv_same_embed_dim:
+        k_l = v_l = q_l
+        k_n = v_n = q_n
+        k_e = v_e = q_e
+        total_ops += q_l * ops.in_proj_weight.shape[1] * ops.in_proj_weight.shape[0]
+    else:
+        k_l, k_n, k_e = key.shape
+        v_l, v_n, v_e = value.shape
+        assert q_e == k_e and k_n == v_n
+        total_ops += q_l * ops.q_proj_weight.shape[1] * ops.q_proj_weight.shape[0]
+        total_ops += k_l * ops.k_proj_weight.shape[1] * ops.k_proj_weight.shape[0]
+        total_ops += v_l * ops.v_proj_weight.shape[1] * ops.v_proj_weight.shape[0]
+
+    if ops.in_proj_weight is not None:
+        total_ops += ops.in_proj_bias.numel()
+    if ops.bias_k is not None:
+        total_ops += ops.bias_k.numel()
+    if ops.bias_v is not None:
+        total_ops += ops.bias_v.numel()
+
+    # attention
+    # q, k, v -> l,bs*num_heads,head_dim -> bs*num_heads,l,head_dim
+    if ops.add_zero_attn:
+        k_l += 1
+        v_l += 1
+    # attn_output_weights = torch.bmm(q, k.transpose(1, 2))
+    # assert list(attn_output_weights.size()) == [bsz * num_heads, tgt_len, src_len]
+    total_ops += num_heads * q_l * head_dim * k_l
+    # attn_output = torch.bmm(attn_output_weights, v)
+    # assert list(attn_output.size()) == [bsz * num_heads, tgt_len, head_dim]
+    total_ops += num_heads * q_l * k_l * v_e
+
+    # out_proj
+    total_ops += q_l * ops.out_proj.weight.shape[1] * ops.out_proj.weight.shape[0]
+    if ops.out_proj.bias is not None:
+        total_ops += ops.out_proj.bias.numel()
 
     ops.total_ops += torch.DoubleTensor([int(total_ops)])
 
 
 register_hooks = {
     nn.ZeroPad2d: zero_ops,  # padding does not involve any multiplication.
-    nn.Conv1d: count_convNd_mul,
-    nn.Conv2d: count_convNd_mul,
-    nn.Conv3d: count_convNd_mul,
-    nn.ConvTranspose1d: count_convNd_mul,
-    nn.ConvTranspose2d: count_convNd_mul,
-    nn.ConvTranspose3d: count_convNd_mul,
+    # Convolution
+    nn.Conv1d: count_convNd_ver2,
+    nn.Conv2d: count_convNd_ver2,
+    nn.Conv3d: count_convNd_ver2,
+    nn.ConvTranspose1d: count_convNd_ver2,
+    nn.ConvTranspose2d: count_convNd_ver2,
+    nn.ConvTranspose3d: count_convNd_ver2,
+    nn.Linear: count_linear,
+    nn.Identity: zero_ops,
+    # Attention
+    nn.MultiheadAttention: count_mha,
+    # Normalization
     nn.BatchNorm1d: count_bn,
     nn.BatchNorm2d: count_bn,
     nn.BatchNorm3d: count_bn,
+    nn.LayerNorm: count_ln,
+    nn.InstanceNorm1d: count_in,
+    nn.InstanceNorm2d: count_in,
+    nn.InstanceNorm3d: count_in,
+    nn.Dropout: zero_ops,
+    # Activation
     nn.ReLU: zero_ops,
     nn.ReLU6: zero_ops,
-    nn.PReLU: count_relu,
-    nn.LeakyReLU: count_relu,
+    nn.PReLU: count_relu_w_params,
+    nn.LeakyReLU: count_relu_w_params,
     nn.Softmax: count_softmax,
+    # Pooling
     nn.MaxPool1d: zero_ops,
     nn.MaxPool2d: zero_ops,
     nn.MaxPool3d: zero_ops,
@@ -219,12 +310,10 @@ register_hooks = {
     nn.AdaptiveAvgPool1d: count_adap_avgpool,
     nn.AdaptiveAvgPool2d: count_adap_avgpool,
     nn.AdaptiveAvgPool3d: count_adap_avgpool,
-    nn.Linear: count_linear,
-    nn.Dropout: zero_ops,
-    nn.Upsample: count_upsample,
-    nn.UpsamplingBilinear2d: count_upsample,
-    nn.UpsamplingNearest2d: count_upsample,
-    nn.Identity: zero_ops,
+    # Interpolation
+    nn.Upsample: zero_ops,
+    nn.UpsamplingBilinear2d: zero_ops,
+    nn.UpsamplingNearest2d: zero_ops,
 }
 
 if LooseVersion(torch.__version__) < LooseVersion("1.0.0"):

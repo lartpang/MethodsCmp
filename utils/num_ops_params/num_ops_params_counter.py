@@ -16,7 +16,6 @@ def cal_macs_params(
         f"Calculating the MACs and the number of parameters for model {model.__class__.__name__} with data "
     )
 
-    model.eval()
     macs, params = count_info.profile(
         model,
         inputs=(data,),
@@ -41,7 +40,6 @@ def cal_macs_params_v2(
 ):
     print(f"Counting Number of Ops. & Params. for {model.__class__.__name__}")
 
-    model.eval()
     macs, params = count_info.profile(
         model,
         inputs=(data,),
