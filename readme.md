@@ -34,6 +34,7 @@ python main.py --method-names zoomnet ugtr c2fnet ujsc pfnet mgl_r slsr sinet
 
 * 2023-07-28: 
   * [New & Important] Update the library for count FLOPs/MACS from `pytorch-OpCounter` to `fvcore` which can count FLOPs/MACs of the complex module, like Transformer.
+  * Remove the useless `test` folder.
   * [Experimental Feature] Add the new feature for counting the peak inference GPU memory of the model.
 * 2022-03-03: Add more methods, add the gpu warmup process in counting FPS and update the readme.
 * 2021-09-29: Refactor again.
