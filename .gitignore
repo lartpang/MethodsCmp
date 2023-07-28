@@ -270,4 +270,5 @@ out
 gen
 
 # private files
-/untracked_methods/*
+/untracked/*
+/methods/*

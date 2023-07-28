@@ -1,29 +1,4 @@
 from collections.abc import Iterable
-from itertools import chain
-
-from decorator import decorator
-from torch import nn
-
-
-def prRed(skk):
-    print("\033[91m{}\033[00m".format(skk))
-
-
-def prGreen(skk):
-    print("\033[92m{}\033[00m".format(skk))
-
-
-def prYellow(skk):
-    print("\033[93m{}\033[00m".format(skk))
-
-
-@decorator
-def print_ops_name(func, verbose: bool = False, *args, **kwargs):
-    if verbose:
-        for item in chain(args, kwargs.values()):
-            if isinstance(item, nn.Module):
-                print(item)
-    func(*args, **kwargs)
 
 
 def clever_format(nums, format="%.2f"):

@@ -6,27 +6,28 @@ from tqdm import tqdm
 from ..misc import to_cuda
 
 
-def cal_fps(model, data, num_samples=1000, on_gpu=True):
+def cal_fps(model, data, num_samples=1000, on_gpu=True, return_number=False):
     print(
         f"Counting FPS for {model.__class__.__name__} with {num_samples} data", end=""
     )
 
     if on_gpu:
         print(" on gpu")
+        data = to_cuda(data)
+        model.cuda()
         fps = _get_fps_on_gpu(data, model, num_samples)
+        model.cpu()
     else:
         print(" on cpu")
         fps = _get_fps_on_cpu(data, model, num_samples)
 
-    fps = f"{fps:.03f}"
+    if not return_number:
+        fps = f"{fps:.03f}"
     return fps
 
 
 @torch.no_grad()
 def _get_fps_on_gpu(data, model, num_samples):
-    data = to_cuda(data)
-    model.cuda()
-
     # warmup
     for _ in range(5):
         model(data)  # 按照实际情况改写

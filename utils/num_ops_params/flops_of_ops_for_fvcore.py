@@ -1,0 +1,45 @@
+from fvcore.nn.jit_handles import elementwise_flop_counter
+
+customized_ops = {
+    #
+    "aten::lt": None,
+    "aten::ne": None,
+    #
+    "aten::mul": elementwise_flop_counter(1, 0),
+    "aten::mul_": elementwise_flop_counter(1, 0),
+    "aten::add": elementwise_flop_counter(1, 0),
+    "aten::add_": elementwise_flop_counter(1, 0),
+    "aten::sub": elementwise_flop_counter(1, 0),
+    "aten::rsub": elementwise_flop_counter(1, 0),
+    "aten::sub_": elementwise_flop_counter(1, 0),
+    "aten::div": elementwise_flop_counter(1, 0),
+    "aten::div_": elementwise_flop_counter(1, 0),
+    "aten::mean": elementwise_flop_counter(1, 0),
+    "aten::norm": elementwise_flop_counter(1, 0),
+    "aten::cosine_similarity": None,  # TODO
+    "aten::min": None,
+    "aten::max": None,
+    "aten::abs": None,
+    "aten::pow": None,
+    "aten::im2col": None,
+    "aten::max_pool2d": None,
+    "aten::avg_pool2d": None,
+    "aten::max_pool3d": None,
+    "aten::avg_pool3d": None,
+    "aten::adaptive_max_pool2d": elementwise_flop_counter(1, 0),
+    "aten::repeat": None,
+    "aten::expand_as": None,
+    "aten::clamp_min": None,
+    # activation layer
+    "aten::sigmoid": None,
+    "aten::softmax": None,
+    "aten::log_softmax": None,
+    "aten::feature_dropout": None,
+    "aten::gelu": None,
+    "aten::tanh": None,
+    "aten::tanh_": None,
+    "aten::hardtanh": None,
+    "aten::hardtanh_": None,
+    "aten::prelu": None,
+    "aten::leaky_relu_": None,
+}

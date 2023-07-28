@@ -1,15 +1,21 @@
 import argparse
-import copy
 
 import methods
 from utils.fps.fps_counter import cal_fps
-from utils.num_ops_params.num_ops_params_counter import cal_macs_params_v2
+from utils.gou_mem.gpu_mem_counter import cal_gpu_mem
+from utils.num_ops_params.num_ops_params_counter import cal_macs_params
 
 parser = argparse.ArgumentParser(
-    description="A simple toolkit for counting the FLOPs/MACs, Parameters and FPS of the model."
+    description="A simple toolkit for counting the FLOPs/MACs, Parameters, FPS and GPU Memory of the model."
 )
 parser.add_argument(
     "--method-names", nargs="+", help="The names of the methods you want to evaluate."
+)
+parser.add_argument(
+    "--mode",
+    nargs="+",
+    choices=["ops_params", "fps", "gpu_mem"],
+    default=["ops_params", "fps", "gpu_mem"],
 )
 args = parser.parse_args()
 
@@ -23,32 +29,18 @@ for method_name in args.method_names:
         )
 
     model_info = model_func()
-
     model = model_info["model"]
     data = model_info["data"]
-    custom_ops = model_info.get("custom_ops", None)
-
     model.eval()
 
-    num_ops, num_params = cal_macs_params_v2(
-        model=copy.deepcopy(model),
-        data=copy.deepcopy(data),
-        custom_ops=custom_ops,
-        return_flops=True,
-    )
-    print(f"[{method_name}] FLOPs: {num_ops}, Params: {num_params}")
+    if "ops_params" in args.mode:
+        num_ops, num_params = cal_macs_params(model=model, data=data, return_flops=True)
+        print(f"[{method_name}] FLOPs: {num_ops}, Params: {num_params}")
 
-    # gpu_mem = cal_gpu_mem(
-    #     model=copy.deepcopy(model),
-    #     data=copy.deepcopy(data),
-    #     device=args.gpu,
-    # )
-    # print(f"[{method_name}] GPU {args.gpu} MEM: {gpu_mem}")
+    if "fps" in args.mode:
+        fps = cal_fps(model=model, data=data, num_samples=100, on_gpu=True)
+        print(f"[{method_name}] FPS: {fps}")
 
-    fps = cal_fps(
-        model=copy.deepcopy(model),
-        data=copy.deepcopy(data),
-        num_samples=100,
-        on_gpu=True,
-    )
-    print(f"[{method_name}] FPS: {fps}")
+    if "gpu_mem" in args.mode:
+        gpu_mem = cal_gpu_mem(model=model, data=data)
+        print(f"[{method_name}] MEM: {gpu_mem}")
