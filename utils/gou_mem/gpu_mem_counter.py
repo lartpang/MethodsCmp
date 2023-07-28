@@ -4,6 +4,7 @@ from torch import nn
 from utils.misc import to_cuda
 
 
+@torch.no_grad()
 def cal_gpu_mem(model: nn.Module, data, return_number=False):
     assert torch.cuda.is_available()
 
