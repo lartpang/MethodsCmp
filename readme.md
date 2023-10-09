@@ -14,6 +14,9 @@ optional arguments:
   --mode {ops_params,fps,gpu_mem} [{ops_params,fps,gpu_mem} ...]
 ```
 
+**NOTE**:
+* [`fvcore` cannot count the FLOPs of the built-in module nn.MultiHeadAttention of PyTorch](https://github.com/lartpang/MethodsCmp/issues/1)
+
 ## Usage
 
 ```bash
